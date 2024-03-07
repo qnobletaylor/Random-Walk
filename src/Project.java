@@ -126,29 +126,22 @@ public class Project extends Application {
       xPos.bind(car.translateXProperty());
       yPos.bind(car.translateYProperty());
 
+      Polyline drawLine = new Polyline();
+      drawLine.setStroke(new Color(0, 0, 1, 0.4));
+      getChildren().add(drawLine);
+
       car
         .translateXProperty()
         .addListener((observable, oldValue, newValue) -> {
-          System.out.println("car moving");
-          Circle drawLine = new Circle(
-            xPos.doubleValue(),
-            yPos.doubleValue(),
-            3
-          );
-          drawLine.setFill(new Color(0, 0, 1, 0.4));
-          getChildren().add(drawLine);
+          //System.out.println("car moving");
+          drawLine.getPoints().add(car.translateXProperty().doubleValue());
+          drawLine.getPoints().add(car.translateYProperty().doubleValue());
         });
       car
         .translateYProperty()
         .addListener((observable, oldValue, newValue) -> {
-          System.out.println("car moving");
-          Circle drawLine = new Circle(
-            xPos.doubleValue(),
-            yPos.doubleValue(),
-            3
-          );
-          drawLine.setFill(new Color(0, 0, 1, 0.4));
-          getChildren().add(drawLine);
+          drawLine.getPoints().add(car.translateXProperty().doubleValue());
+          drawLine.getPoints().add(car.translateYProperty().doubleValue());
         });
     }
 
