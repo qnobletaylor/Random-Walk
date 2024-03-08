@@ -9,7 +9,6 @@ import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Polyline;
@@ -28,7 +27,7 @@ public class Project extends Application {
   Button resetBtn = new Button("Generate Line");
   Button circlesBtn = new Button("Generate Circles");
   RandomWalk walk = new RandomWalk();
-  Circle greenCircles;
+  GreenCircle greenCircles;
   Circle bindCar = new Circle(8);
 
   public static void main(String[] args) {
@@ -52,7 +51,7 @@ public class Project extends Application {
     pane.setBottom(hbox);
 
     circlesBtn.setOnAction(e -> {
-      greenCircles = new GreenCircles().paint();
+      greenCircles = new GreenCircle();
       stackPane.getChildren().add(greenCircles);
     });
     resetBtn.setOnAction(e -> walk.paint());
@@ -75,9 +74,18 @@ public class Project extends Application {
     stage.setResizable(false);
   }
 
-  public class GreenCircles extends Circle {
+  public class GreenCircle extends Circle {
 
     private boolean touched;
+
+    public GreenCircle() {
+      //super(x, y, radius);
+      setRadius(15);
+      setTranslateX(randCoord());
+      setTranslateY(randCoord());
+      setFill(Color.GREEN);
+      touched = false;
+    }
 
     public Circle paint() {
       Circle randCircle = new Circle(randCoord(), randCoord(), 15);
@@ -88,6 +96,14 @@ public class Project extends Application {
 
     private double randCoord() {
       return 0 + (int) (Math.random() * ((PANESIZE - 0) + 1));
+    }
+
+    public void setTouched(boolean bool) {
+      touched = bool;
+    }
+
+    public boolean getTouched() {
+      return touched;
     }
   }
 
