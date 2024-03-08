@@ -1,10 +1,8 @@
-import java.util.ArrayList;
 import javafx.animation.Interpolator;
 import javafx.animation.PathTransition;
 import javafx.application.Application;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
@@ -13,8 +11,8 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Line;
 import javafx.scene.shape.Polyline;
+import javafx.scene.shape.Shape;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -60,6 +58,7 @@ public class Project extends Application {
     stage.setTitle("Random Walk");
     stage.setScene(scene);
     stage.show();
+    stage.setResizable(false);
   }
 
   public class GreenCircles extends Pane {
@@ -85,20 +84,58 @@ public class Project extends Application {
     private final int STEP_COUNT = 2000;
 
     private void paint() {
+      // Clear children
+      getChildren().clear();
+      // Create the 'car' that walks the path
       Circle car = new Circle(8);
-      Polyline path = new Polyline();
+      car.setFill(new Color(1, 0, 0, .4)); // opaque red
+      car.setTranslateX(PANESIZE / 2); // half window size
+      car.setTranslateY(PANESIZE / 2); // half window size
 
+      // Create Polyline and get a new random path
+      Polyline path = setWalkPath();
+      // Create Polyline which will be the line being drawn
+      Polyline drawLine = new Polyline();
+      drawLine.setStroke(new Color(0, 0, 1, 0.4));
+
+      // add car and drawLine to pane
+      getChildren().addAll(car, drawLine);
+
+      // Create PathTransition
+      PathTransition pathTrans = getWalkTransition(path, car);
+      pathTrans.play(); // play transition animation
+
+      // Listener for change in circle x, will add points to the drawLine
+      car
+        .translateXProperty()
+        .addListener((observable, oldValue, newValue) -> {
+          // Adds one point each time listener gets called
+          drawLine.getPoints().add(car.translateXProperty().doubleValue());
+          drawLine.getPoints().add(car.translateYProperty().doubleValue());
+        });
+      // Listener for change in circle y, will add points to the drawLine
+      car
+        .translateYProperty()
+        .addListener((observable, oldValue, newValue) -> {
+          // adds one point each time listener gets called
+          drawLine.getPoints().add(car.translateXProperty().doubleValue());
+          drawLine.getPoints().add(car.translateYProperty().doubleValue());
+        });
+    }
+
+    private PathTransition getWalkTransition(Shape path, Node node) {
       PathTransition pathTrans = new PathTransition();
       pathTrans.setPath(path);
-      pathTrans.setNode(car);
+      pathTrans.setNode(node);
       pathTrans.setDuration(Duration.seconds(480));
       pathTrans.setCycleCount(1);
       pathTrans.setInterpolator(Interpolator.LINEAR);
 
-      getChildren().clear();
+      return pathTrans;
+    }
 
-      car.setFill(new Color(1, 0, 0, .4));
-
+    private Polyline setWalkPath() {
+      Polyline path = new Polyline();
       double coordinates[] = { PANESIZE / 2, PANESIZE / 2 };
       for (int i = 0; i < STEP_COUNT; i++) {
         // Add a point to the polyLine
@@ -109,36 +146,7 @@ public class Project extends Application {
         // Generates random endX endY coordinates
         getEndCoordinates(coordinates);
       }
-      getChildren().addAll(car);
-
-      car.setTranslateX(PANESIZE / 2);
-      car.setTranslateY(PANESIZE / 2);
-
-      pathTrans.play();
-
-      DoubleProperty xPos = new SimpleDoubleProperty();
-      DoubleProperty yPos = new SimpleDoubleProperty();
-
-      xPos.bind(car.translateXProperty());
-      yPos.bind(car.translateYProperty());
-
-      Polyline drawLine = new Polyline();
-      drawLine.setStroke(new Color(0, 0, 1, 0.4));
-      getChildren().add(drawLine);
-
-      car
-        .translateXProperty()
-        .addListener((observable, oldValue, newValue) -> {
-          //System.out.println("car moving");
-          drawLine.getPoints().add(car.translateXProperty().doubleValue());
-          drawLine.getPoints().add(car.translateYProperty().doubleValue());
-        });
-      car
-        .translateYProperty()
-        .addListener((observable, oldValue, newValue) -> {
-          drawLine.getPoints().add(car.translateXProperty().doubleValue());
-          drawLine.getPoints().add(car.translateYProperty().doubleValue());
-        });
+      return path;
     }
 
     private double randDistance() {
