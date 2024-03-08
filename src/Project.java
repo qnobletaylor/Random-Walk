@@ -24,11 +24,11 @@ public class Project extends Application {
   final double PANESIZE = 800;
   BorderPane pane = new BorderPane();
   HBox hbox = new HBox();
-  StackPane stackPane = new StackPane();
+  Pane stackPane = new Pane();
   Button resetBtn = new Button("Generate Line");
   Button circlesBtn = new Button("Generate Circles");
   RandomWalk walk = new RandomWalk();
-  GreenCircles greenCircles = new GreenCircles();
+  Circle greenCircles;
   Circle bindCar = new Circle(8);
 
   public static void main(String[] args) {
@@ -37,24 +37,33 @@ public class Project extends Application {
 
   @Override
   public void start(Stage stage) throws Exception {
+    // Circle greenCircles = new Circle(15);
+
     bindCar.setFill(Color.BLACK);
 
     hbox.setSpacing(20);
     hbox.setAlignment(Pos.BOTTOM_RIGHT);
 
-    stackPane.getChildren().addAll(greenCircles, walk);
-    hbox.getChildren().addAll(resetBtn, circlesBtn);
+    stackPane.getChildren().add(walk);
 
+    hbox.getChildren().addAll(resetBtn, circlesBtn);
     pane.setTop(new Pane(bindCar));
     pane.setCenter(stackPane);
     pane.setBottom(hbox);
 
-    circlesBtn.setOnAction(e -> greenCircles.paint());
+    circlesBtn.setOnAction(e -> {
+      greenCircles = new GreenCircles().paint();
+      stackPane.getChildren().add(greenCircles);
+    });
     resetBtn.setOnAction(e -> walk.paint());
-    greenCircles
-      .boundsInLocalProperty()
+    bindCar
+      .translateXProperty()
       .addListener((observable, oldValue, newValue) -> {
-        if (greenCircles.intersects(bindCar.getBoundsInLocal())) {
+        if (
+          bindCar
+            .getBoundsInParent()
+            .intersects(greenCircles.getBoundsInParent())
+        ) {
           System.out.println("Overlaps " + index++);
         }
       });
@@ -66,17 +75,15 @@ public class Project extends Application {
     stage.setResizable(false);
   }
 
-  public class GreenCircles extends Pane {
+  public class GreenCircles extends Circle {
 
-    private void paint() {
-      getChildren().clear();
-      Circle[] randCircles = new Circle[10];
+    private boolean touched;
 
-      for (int i = 0; i < 10; i++) {
-        randCircles[i] = new Circle(randCoord(), randCoord(), 15);
-        randCircles[i].setFill(Color.GREEN);
-        getChildren().add(randCircles[i]);
-      }
+    public Circle paint() {
+      Circle randCircle = new Circle(randCoord(), randCoord(), 15);
+      randCircle.setFill(Color.GREEN);
+
+      return randCircle;
     }
 
     private double randCoord() {
@@ -152,7 +159,7 @@ public class Project extends Application {
       PathTransition pathTrans = new PathTransition();
       pathTrans.setPath(path);
       pathTrans.setNode(node);
-      pathTrans.setDuration(Duration.seconds(480));
+      pathTrans.setDuration(Duration.seconds(60));
       pathTrans.setCycleCount(1);
       pathTrans.setInterpolator(Interpolator.LINEAR);
 
