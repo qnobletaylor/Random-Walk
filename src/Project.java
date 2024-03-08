@@ -82,43 +82,39 @@ public class Project extends Application {
 
   public class RandomWalk extends Pane {
 
-    final int SIZE = 2000;
+    private final int STEP_COUNT = 2000;
 
     private void paint() {
-      getChildren().clear();
       Circle car = new Circle(8);
+      Polyline path = new Polyline();
+
+      PathTransition pathTrans = new PathTransition();
+      pathTrans.setPath(path);
+      pathTrans.setNode(car);
+      pathTrans.setDuration(Duration.seconds(480));
+      pathTrans.setCycleCount(1);
+      pathTrans.setInterpolator(Interpolator.LINEAR);
+
+      getChildren().clear();
+
       car.setFill(new Color(1, 0, 0, .4));
-      PathTransition trans = new PathTransition();
 
-      Polyline linePath = new Polyline();
-      ArrayList<Double> points = new ArrayList<>();
-      double coordinates[] = { 400, 400, 0, 0 };
-      for (int i = 0; i < 2000; i++) {
+      double coordinates[] = { PANESIZE / 2, PANESIZE / 2 };
+      for (int i = 0; i < STEP_COUNT; i++) {
+        // Add a point to the polyLine
+        // X coord
+        path.getPoints().add(coordinates[0]);
+        // Y coord
+        path.getPoints().add(coordinates[1]);
+        // Generates random endX endY coordinates
         getEndCoordinates(coordinates);
-        points.add(coordinates[0]);
-        points.add(coordinates[1]);
-        Line line = new Line(
-          coordinates[0],
-          coordinates[1],
-          coordinates[2],
-          coordinates[3]
-        );
-        //Circle circle = new Circle(coordinates[2], coordinates[3], 5);
-        //circle.setFill(new Color(1, 0, 0, .3));
-        //line.setStroke(Color.BLUE);
-        resetStartCoords(coordinates);
-        //getChildren().addAll(circle);
       }
-      //linePath.setStroke(Color.BLUE);
       getChildren().addAll(car);
-      linePath.getPoints().addAll(points);
 
-      trans.setPath(linePath);
-      trans.setNode(car);
-      trans.setDuration(Duration.seconds(480));
-      trans.setCycleCount(PathTransition.INDEFINITE);
-      trans.setInterpolator(Interpolator.LINEAR);
-      trans.play();
+      car.setTranslateX(PANESIZE / 2);
+      car.setTranslateY(PANESIZE / 2);
+
+      pathTrans.play();
 
       DoubleProperty xPos = new SimpleDoubleProperty();
       DoubleProperty yPos = new SimpleDoubleProperty();
@@ -145,11 +141,6 @@ public class Project extends Application {
         });
     }
 
-    private void resetStartCoords(double[] coords) {
-      coords[0] = coords[2];
-      coords[1] = coords[3];
-    }
-
     private double randDistance() {
       int num = 9 + (int) (Math.random() * ((18 - 9) + 1));
       return (double) num;
@@ -164,8 +155,8 @@ public class Project extends Application {
         newY = changeInDistance * Math.sin(direction) + coords[1];
       } while (newX < 0 || newY < 0 || newX > 800 || newY > 800);
 
-      coords[2] = newX;
-      coords[3] = newY;
+      coords[0] = newX;
+      coords[1] = newY;
     }
 
     /**
