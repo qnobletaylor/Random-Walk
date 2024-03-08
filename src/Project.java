@@ -28,6 +28,7 @@ public class Project extends Application {
   Button circlesBtn = new Button("Generate Circles");
   RandomWalk walk = new RandomWalk();
   GreenCircles greenCircles = new GreenCircles();
+  Circle bindCar = new Circle(8);
 
   public static void main(String[] args) {
     launch(args);
@@ -49,7 +50,7 @@ public class Project extends Application {
     greenCircles
       .boundsInLocalProperty()
       .addListener((observable, oldValue, newValue) -> {
-        if (greenCircles.intersects(walk.getBoundsInLocal())) {
+        if (greenCircles.intersects(bindCar.getBoundsInLocal())) {
           System.out.println("Overlaps " + index++);
         }
       });
@@ -88,6 +89,8 @@ public class Project extends Application {
       getChildren().clear();
       // Create the 'car' that walks the path
       Circle car = new Circle(8);
+      bindCar.translateXProperty().bind(car.translateXProperty());
+      bindCar.translateYProperty().bind(car.translateYProperty());
       car.setFill(new Color(1, 0, 0, .4)); // opaque red
       car.setTranslateX(PANESIZE / 2); // half window size
       car.setTranslateY(PANESIZE / 2); // half window size
