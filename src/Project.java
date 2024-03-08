@@ -1,3 +1,4 @@
+import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.animation.PathTransition;
 import javafx.application.Application;
@@ -36,12 +37,15 @@ public class Project extends Application {
 
   @Override
   public void start(Stage stage) throws Exception {
+    bindCar.setFill(Color.BLACK);
+
     hbox.setSpacing(20);
     hbox.setAlignment(Pos.BOTTOM_RIGHT);
 
     stackPane.getChildren().addAll(greenCircles, walk);
     hbox.getChildren().addAll(resetBtn, circlesBtn);
 
+    pane.setTop(new Pane(bindCar));
     pane.setCenter(stackPane);
     pane.setBottom(hbox);
 
@@ -90,7 +94,7 @@ public class Project extends Application {
       // Create the 'car' that walks the path
       Circle car = new Circle(8);
       bindCar.translateXProperty().bind(car.translateXProperty());
-      bindCar.translateYProperty().bind(car.translateYProperty());
+      bindCar.translateYProperty().bind(car.translateYProperty().add(16));
       car.setFill(new Color(1, 0, 0, .4)); // opaque red
       car.setTranslateX(PANESIZE / 2); // half window size
       car.setTranslateY(PANESIZE / 2); // half window size
@@ -124,6 +128,24 @@ public class Project extends Application {
           drawLine.getPoints().add(car.translateXProperty().doubleValue());
           drawLine.getPoints().add(car.translateYProperty().doubleValue());
         });
+
+      Button pause = new Button("Pause");
+      getChildren().add(pause);
+
+      pause.setOnAction(e -> {
+        pauseAndPlay(pathTrans);
+        if (pathTrans.getStatus() == Animation.Status.PAUSED) {
+          pause.setText("Play");
+        } else pause.setText("Pause");
+      });
+    }
+
+    private void pauseAndPlay(PathTransition trans) {
+      if (trans.getStatus() == Animation.Status.PAUSED) {
+        trans.play();
+      } else {
+        trans.pause();
+      }
     }
 
     private PathTransition getWalkTransition(Shape path, Node node) {
