@@ -57,7 +57,9 @@ public class Project extends Application {
         stackPane.getChildren().add(greenCircleList.get(i));
       }
     });
-    resetBtn.setOnAction(e -> walk.paint());
+    resetBtn.setOnAction(e -> {
+      walk.paint();
+    });
 
     Scene scene = new Scene(pane, PANESIZE, PANESIZE);
     stage.setTitle("Random Walk");
@@ -66,10 +68,18 @@ public class Project extends Application {
     stage.setResizable(false);
   }
 
-  private boolean activateCircle(Shape car) {
+  private void checkCollision(Shape car) {
     for (GreenCircle green : greenCircleList) {
-      if (car.getBoundsInParent().intersects(green.getBoundsInParent())) {
-        if (!green.getTouched()) {}
+      Shape intersect = Shape.intersect(car, green);
+      if (intersect.getBoundsInLocal().getWidth() != -1) {
+        if (!green.getTouched()) {
+          green.setFill(Color.RED);
+          green.setTouched(true);
+          System.out.println("Green Circle Collided");
+          stackPane
+            .getChildren()
+            .add(new RandomWalk(green.getLayoutX(), green.getLayoutY()));
+        }
       }
     }
   }
@@ -78,17 +88,31 @@ public class Project extends Application {
 
     private final int STEP_COUNT = 2000;
 
+    private double startX;
+    private double startY;
+
+    public RandomWalk(double startX, double startY) {
+      this.startX = startX;
+      this.startY = startY;
+      paint();
+    }
+
+    public RandomWalk() {
+      startX = PANESIZE / 2;
+      startY = PANESIZE / 2;
+    }
+
     private void paint() {
       // Clear children
       getChildren().clear();
       // Create the 'car' that walks the path
       Circle car = new Circle(8);
       car.setFill(new Color(1, 0, 0, .4)); // opaque red
-      car.setTranslateX(PANESIZE / 2); // half window size
-      car.setTranslateY(PANESIZE / 2); // half window size
+      car.setTranslateX(startX); // starting point
+      car.setTranslateY(startY);
 
       // Create Polyline and get a new random path
-      Polyline path = setWalkPath();
+      Polyline path = setWalkPath(startX, startY);
       // Create Polyline which will be the line being drawn
       Polyline drawLine = new Polyline();
       drawLine.setStroke(new Color(0, 0, 1, 0.4));
@@ -100,17 +124,11 @@ public class Project extends Application {
       PathTransition pathTrans = getWalkTransition(path, car);
       pathTrans.play(); // play transition animation
 
-      // Listener for change in circle x, will add points to the drawLine
+      drawLine.setSmooth(true);
+
+      // Listener on the car to draw the path
       car
-        .translateXProperty()
-        .addListener((observable, oldValue, newValue) -> {
-          // Adds one point each time listener gets called
-          drawLine.getPoints().add(car.translateXProperty().doubleValue());
-          drawLine.getPoints().add(car.translateYProperty().doubleValue());
-        });
-      // Listener for change in circle y, will add points to the drawLine
-      car
-        .translateYProperty()
+        .boundsInParentProperty()
         .addListener((observable, oldValue, newValue) -> {
           // adds one point each time listener gets called
           drawLine.getPoints().add(car.translateXProperty().doubleValue());
@@ -119,14 +137,8 @@ public class Project extends Application {
 
       // Listens for collision on a green circle
       car
-        .translateXProperty()
-        .addListener((observable, oldValue, newValue) -> {
-          if (
-            car.getBoundsInParent().intersects(greenCircles.getBoundsInParent())
-          ) {
-            System.out.println("Overlaps " + index++);
-          }
-        });
+        .boundsInParentProperty()
+        .addListener((c, n, o) -> checkCollision(car));
 
       Button pause = new Button("Pause");
       getChildren().add(pause);
@@ -151,16 +163,16 @@ public class Project extends Application {
       PathTransition pathTrans = new PathTransition();
       pathTrans.setPath(path);
       pathTrans.setNode(node);
-      pathTrans.setDuration(Duration.seconds(60));
+      pathTrans.setDuration(Duration.seconds(210));
       pathTrans.setCycleCount(1);
       pathTrans.setInterpolator(Interpolator.LINEAR);
 
       return pathTrans;
     }
 
-    private Polyline setWalkPath() {
+    private Polyline setWalkPath(double startX, double startY) {
       Polyline path = new Polyline();
-      double coordinates[] = { PANESIZE / 2, PANESIZE / 2 };
+      double coordinates[] = { startX, startY };
       for (int i = 0; i < STEP_COUNT; i++) {
         // Add a point to the polyLine
         // X coord
