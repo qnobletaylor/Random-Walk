@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.animation.PathTransition;
@@ -21,14 +22,13 @@ public class Project extends Application {
   int index = 0;
 
   final double PANESIZE = 800;
-  BorderPane pane = new BorderPane();
-  HBox hbox = new HBox();
-  Pane stackPane = new Pane();
-  Button resetBtn = new Button("Generate Line");
-  Button circlesBtn = new Button("Generate Circles");
-  RandomWalk walk = new RandomWalk();
-  GreenCircle greenCircles;
-  Circle bindCar = new Circle(8);
+  private BorderPane pane = new BorderPane();
+  private HBox hbox = new HBox();
+  private Pane stackPane = new Pane();
+  private Button resetBtn = new Button("Generate Line");
+  private Button circlesBtn = new Button("Generate Circles");
+  private RandomWalk walk = new RandomWalk();
+  private ArrayList<GreenCircle> greenCircleList;
 
   public static void main(String[] args) {
     launch(args);
@@ -36,36 +36,28 @@ public class Project extends Application {
 
   @Override
   public void start(Stage stage) throws Exception {
-    // Circle greenCircles = new Circle(15);
-
-    bindCar.setFill(Color.BLACK);
-
+    greenCircleList = new ArrayList<>();
     hbox.setSpacing(20);
     hbox.setAlignment(Pos.BOTTOM_RIGHT);
 
     stackPane.getChildren().add(walk);
 
     hbox.getChildren().addAll(resetBtn, circlesBtn);
-    pane.setTop(new Pane(bindCar));
     pane.setCenter(stackPane);
     pane.setBottom(hbox);
 
     circlesBtn.setOnAction(e -> {
-      greenCircles = new GreenCircle();
-      stackPane.getChildren().add(greenCircles);
+      if (stackPane.getChildren().size() > 1) {
+        stackPane.getChildren().remove(1, stackPane.getChildren().size());
+        greenCircleList.clear();
+      }
+
+      for (int i = 0; i < 10; i++) {
+        greenCircleList.add(new GreenCircle());
+        stackPane.getChildren().add(greenCircleList.get(i));
+      }
     });
     resetBtn.setOnAction(e -> walk.paint());
-    bindCar
-      .translateXProperty()
-      .addListener((observable, oldValue, newValue) -> {
-        if (
-          bindCar
-            .getBoundsInParent()
-            .intersects(greenCircles.getBoundsInParent())
-        ) {
-          System.out.println("Overlaps " + index++);
-        }
-      });
 
     Scene scene = new Scene(pane, PANESIZE, PANESIZE);
     stage.setTitle("Random Walk");
@@ -74,36 +66,11 @@ public class Project extends Application {
     stage.setResizable(false);
   }
 
-  public class GreenCircle extends Circle {
-
-    private boolean touched;
-
-    public GreenCircle() {
-      //super(x, y, radius);
-      setRadius(15);
-      setTranslateX(randCoord());
-      setTranslateY(randCoord());
-      setFill(Color.GREEN);
-      touched = false;
-    }
-
-    public Circle paint() {
-      Circle randCircle = new Circle(randCoord(), randCoord(), 15);
-      randCircle.setFill(Color.GREEN);
-
-      return randCircle;
-    }
-
-    private double randCoord() {
-      return 0 + (int) (Math.random() * ((PANESIZE - 0) + 1));
-    }
-
-    public void setTouched(boolean bool) {
-      touched = bool;
-    }
-
-    public boolean getTouched() {
-      return touched;
+  private boolean activateCircle(Shape car) {
+    for (GreenCircle green : greenCircleList) {
+      if (car.getBoundsInParent().intersects(green.getBoundsInParent())) {
+        if (!green.getTouched()) {}
+      }
     }
   }
 
@@ -116,8 +83,6 @@ public class Project extends Application {
       getChildren().clear();
       // Create the 'car' that walks the path
       Circle car = new Circle(8);
-      bindCar.translateXProperty().bind(car.translateXProperty());
-      bindCar.translateYProperty().bind(car.translateYProperty().add(16));
       car.setFill(new Color(1, 0, 0, .4)); // opaque red
       car.setTranslateX(PANESIZE / 2); // half window size
       car.setTranslateY(PANESIZE / 2); // half window size
@@ -150,6 +115,17 @@ public class Project extends Application {
           // adds one point each time listener gets called
           drawLine.getPoints().add(car.translateXProperty().doubleValue());
           drawLine.getPoints().add(car.translateYProperty().doubleValue());
+        });
+
+      // Listens for collision on a green circle
+      car
+        .translateXProperty()
+        .addListener((observable, oldValue, newValue) -> {
+          if (
+            car.getBoundsInParent().intersects(greenCircles.getBoundsInParent())
+          ) {
+            System.out.println("Overlaps " + index++);
+          }
         });
 
       Button pause = new Button("Pause");
