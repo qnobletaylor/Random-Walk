@@ -1,5 +1,8 @@
 import java.util.ArrayList;
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -16,12 +19,24 @@ public class Project extends Application {
   private BorderPane rootPane = new BorderPane();
   private HBox hbox = new HBox();
   private static Pane pane = new Pane();
-  private Button resetBtn = new Button("Reset Stage");
+  private Button resetBtn = new Button("Create Line");
   private Button circlesBtn = new Button("Create Circles");
   private Button pauseBtn = new Button("Play");
-  private RandomWalk rootWalk = new RandomWalk();
+  private static RandomWalk rootWalk = new RandomWalk();
   private static ArrayList<GreenCircle> greenCircleList;
   private static ArrayList<RandomWalk> walkList;
+
+  private static ChangeListener<Bounds> collisionListener = new ChangeListener<>() {
+    @Override
+    public void changed(
+      ObservableValue<? extends Bounds> arg0,
+      Bounds arg1,
+      Bounds arg2
+    ) {
+      checkCollision();
+      System.out.println("its 'working'");
+    }
+  };
 
   public static void main(String[] args) {
     launch(args);
@@ -31,6 +46,9 @@ public class Project extends Application {
   public void start(Stage stage) throws Exception {
     greenCircleList = new ArrayList<>();
     walkList = new ArrayList<>();
+    rootWalk.setStartX(SCENE_SIZE / 2);
+    rootWalk.setStartY(SCENE_SIZE / 2);
+    rootWalk.paint(false);
 
     hbox.setSpacing(20);
     hbox.setAlignment(Pos.BOTTOM_RIGHT);
@@ -43,11 +61,8 @@ public class Project extends Application {
 
     // Resets the pane and creates new green circles
     circlesBtn.setOnAction(e -> {
-      if (pane.getChildren().size() > 1) {
-        pane.getChildren().remove(1, pane.getChildren().size());
-        greenCircleList.clear();
-      }
-
+      clearScene();
+      setAllListeners(walkList);
       for (int i = 0; i < 10; i++) {
         greenCircleList.add(new GreenCircle());
         pane.getChildren().add(greenCircleList.get(i));
@@ -56,15 +71,15 @@ public class Project extends Application {
 
     // Resets the pane.
     resetBtn.setOnAction(e -> {
-      rootWalk.paint(false);
-      pane.getChildren().remove(1, pane.getChildren().size()); // removes everything on pane
-      walkList.clear();
-      greenCircleList.clear();
+      if (resetBtn.getText() == "Create Line") resetBtn.setText("Reset Scene");
+      clearScene();
+      setAllListeners(walkList);
     });
 
     // Event handler to pause and play all animations.
-    pauseBtn.setOnAction(e -> RandomWalk.pauseAndPlay(RandomWalk.getTransList())
-    );
+    pauseBtn.setOnAction(e -> {
+      RandomWalk.pauseAndPlay(RandomWalk.getTransList());
+    });
 
     Scene scene = new Scene(rootPane, SCENE_SIZE, SCENE_SIZE);
     stage.setTitle("Random Walk");
@@ -73,20 +88,54 @@ public class Project extends Application {
     stage.setResizable(false);
   }
 
-  private static void checkCollision(Shape car) {
+  private static void clearScene() {
+    pane.getChildren().remove(1, pane.getChildren().size());
+    removeAllListeners(walkList);
+    walkList.clear();
+    greenCircleList.clear();
+    walkList.add(rootWalk);
+    rootWalk.paint(false);
+  }
+
+  private static void setAllListeners(ArrayList<RandomWalk> walkList) {
+    for (RandomWalk i : walkList) {
+      if (!i.isListener()) {
+        i.getCar().boundsInParentProperty().addListener(collisionListener);
+        i.setListener(true);
+      }
+    }
+  }
+
+  private static void removeAllListeners(ArrayList<RandomWalk> walkList) {
+    for (RandomWalk i : walkList) {
+      i.getCar().boundsInParentProperty().removeListener(collisionListener);
+      i.setListener(false);
+    }
+  }
+
+  private static void checkCollision() {
     for (GreenCircle green : greenCircleList) {
-      Shape intersect = Shape.intersect(car, green);
-      if (intersect.getBoundsInLocal().getWidth() != -1) {
-        if (!green.getTouched()) {
-          green.setFill(Color.RED);
-          green.setTouched(true);
-          System.out.printf(
-            "Green Circle Collided @ %.2f, %.2f\n",
-            green.getLayoutX(),
-            green.getLayoutY()
-          );
-          walkList.add(new RandomWalk(green.getLayoutX(), green.getLayoutY()));
-          pane.getChildren().add(walkList.get(walkList.size() - 1));
+      for (RandomWalk walk : walkList) {
+        Shape intersect = Shape.intersect(walk.getCar(), green);
+        if (intersect.getBoundsInLocal().getWidth() != -1) {
+          if (!green.getTouched()) {
+            green.setFill(Color.RED); // set the circle color to red
+            green.setTouched(true); // set the interaction flag
+            // Console msg
+            System.out.printf(
+              "Green Circle Collided @ %.2f, %.2f\n",
+              green.getLayoutX(),
+              green.getLayoutY()
+            );
+            // Create a new random walk and add it to the list
+            walkList.add(
+              new RandomWalk(green.getLayoutX(), green.getLayoutY(), true)
+            );
+            // add it to the pane
+            pane.getChildren().add(walkList.get(walkList.size() - 1));
+            // set listener on each new 'car'
+            setAllListeners(walkList);
+          }
         }
       }
     }
