@@ -3,7 +3,6 @@ import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.animation.PathTransition;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -23,8 +22,8 @@ public class RandomWalk extends Pane {
   private Polyline path;
   private Polyline drawLine;
   private PathTransition pathTrans;
+  private static double duration = 180;
   private static ArrayList<PathTransition> transList = new ArrayList<>();
-  private static Button pause = new Button("Play");
   private boolean listener;
 
   /**
@@ -39,11 +38,13 @@ public class RandomWalk extends Pane {
     paint(start);
   }
 
-  /**
-   * Default constructor
-   */
+  // Default Constructor
   public RandomWalk() {}
 
+  /**
+   *
+   * @param autoPlay
+   */
   public void paint(boolean autoPlay) {
     // Clear children
     getChildren().clear();
@@ -78,15 +79,14 @@ public class RandomWalk extends Pane {
   }
 
   /**
-   *
-   * @param list
+   * Pauses or plays the animation depending on the current state of the animations
    */
-  public static void pauseAndPlay(ArrayList<PathTransition> transList) {
-    for (PathTransition transPath : transList) {
-      if (transPath.getStatus() != Animation.Status.RUNNING) {
-        transPath.play();
+  public static void pauseAndPlay() {
+    for (PathTransition i : transList) {
+      if (i.getStatus() != Animation.Status.RUNNING) {
+        i.play();
       } else {
-        transPath.pause();
+        i.pause();
       }
     }
   }
@@ -101,7 +101,7 @@ public class RandomWalk extends Pane {
     PathTransition pathTrans = new PathTransition();
     pathTrans.setPath(path);
     pathTrans.setNode(node);
-    pathTrans.setDuration(Duration.seconds(20));
+    pathTrans.setDuration(Duration.seconds(duration));
     pathTrans.setCycleCount(1);
     pathTrans.setInterpolator(Interpolator.LINEAR);
 
@@ -245,14 +245,6 @@ public class RandomWalk extends Pane {
 
   public void setPathTrans(PathTransition pathTrans) {
     this.pathTrans = pathTrans;
-  }
-
-  public Button getPause() {
-    return pause;
-  }
-
-  public void setPause(Button pause) {
-    this.pause = pause;
   }
 
   public static ArrayList<PathTransition> getTransList() {
