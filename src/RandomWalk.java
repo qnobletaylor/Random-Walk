@@ -10,21 +10,26 @@ import javafx.scene.shape.Polyline;
 import javafx.scene.shape.Shape;
 import javafx.util.Duration;
 
+/**
+ * Description : RandomWalk is a class for creating RandomWalk panes and paints a line of 2000
+ * segments long within the pane.
+ *
+ * @author Quinlin Taylor
+ * @since Thu Mar 7 2024
+ * @file RandomWalk.java
+ */
 public class RandomWalk extends Pane {
 
-  // custom attributes
-  private final int STEP_COUNT = 2000;
-  // Where the walk starts x coordinate
-  private double startX;
-  // y coordinate
-  private double startY;
-  private Circle car;
-  private Polyline path;
-  private Polyline drawLine;
-  private PathTransition pathTrans;
-  private static double duration = 180;
-  private static ArrayList<PathTransition> transList = new ArrayList<>();
-  private boolean listener;
+  private final int STEP_COUNT = 2000; // How many points on the line
+  private double startX; // x start coordinate
+  private double startY; // y start coordinate
+  private Circle car; // node which draws the line
+  private Polyline path; // path the line follows
+  private Polyline drawLine; // the line being drawn
+  private PathTransition pathTrans; // transition
+  private static double duration = 180; // how long the transition takes start to end
+  private static ArrayList<PathTransition> transList = new ArrayList<>(); // holds all transitions
+  private boolean listener; // Flag used to check if an instance has a listener
 
   /**
    * Constructor for setting the start point of the walk, it also calls the paint() function which

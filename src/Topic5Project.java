@@ -13,7 +13,17 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Shape;
 import javafx.stage.Stage;
 
-public class Project extends Application {
+/**
+ * Description : This program creates a window that lets a user generate a random walk line.  The
+ * user can also generate 10 random green circles within the window.  If a random walk line hits a
+ * green circle then a new random walk line gets started at the center coordinates of the green
+ * circle. This program also allows the user to pause/play the animation of the lines.
+ *
+ * @author Quinlin Taylor
+ * @since Thu Mar 7 2024
+ * @file Topic5Project.java
+ */
+public class Topic5Project extends Application {
 
   final double SCENE_SIZE = 800;
   private BorderPane rootPane = new BorderPane();
