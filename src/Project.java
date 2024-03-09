@@ -1,34 +1,27 @@
 import java.util.ArrayList;
-import javafx.animation.Animation;
-import javafx.animation.Interpolator;
-import javafx.animation.PathTransition;
 import javafx.application.Application;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.Polyline;
 import javafx.scene.shape.Shape;
 import javafx.stage.Stage;
-import javafx.util.Duration;
 
 public class Project extends Application {
 
-  int index = 0;
-
-  final double PANESIZE = 800;
-  private BorderPane pane = new BorderPane();
+  final double SCENE_SIZE = 800;
+  private BorderPane rootPane = new BorderPane();
   private HBox hbox = new HBox();
-  private Pane stackPane = new Pane();
-  private Button resetBtn = new Button("Generate Line");
-  private Button circlesBtn = new Button("Generate Circles");
-  private RandomWalk walk = new RandomWalk();
-  private ArrayList<GreenCircle> greenCircleList;
+  private static Pane pane = new Pane();
+  private Button resetBtn = new Button("Reset Stage");
+  private Button circlesBtn = new Button("Create Circles");
+  private Button pauseBtn = new Button("Play");
+  private RandomWalk rootWalk = new RandomWalk();
+  private static ArrayList<GreenCircle> greenCircleList;
+  private static ArrayList<RandomWalk> walkList;
 
   public static void main(String[] args) {
     launch(args);
@@ -37,205 +30,64 @@ public class Project extends Application {
   @Override
   public void start(Stage stage) throws Exception {
     greenCircleList = new ArrayList<>();
+    walkList = new ArrayList<>();
+
     hbox.setSpacing(20);
     hbox.setAlignment(Pos.BOTTOM_RIGHT);
 
-    stackPane.getChildren().add(walk);
+    pane.getChildren().add(rootWalk);
 
-    hbox.getChildren().addAll(resetBtn, circlesBtn);
-    pane.setCenter(stackPane);
-    pane.setBottom(hbox);
+    hbox.getChildren().addAll(pauseBtn, resetBtn, circlesBtn);
+    rootPane.setCenter(pane);
+    rootPane.setBottom(hbox);
 
+    // Resets the pane and creates new green circles
     circlesBtn.setOnAction(e -> {
-      if (stackPane.getChildren().size() > 1) {
-        stackPane.getChildren().remove(1, stackPane.getChildren().size());
+      if (pane.getChildren().size() > 1) {
+        pane.getChildren().remove(1, pane.getChildren().size());
         greenCircleList.clear();
       }
 
       for (int i = 0; i < 10; i++) {
         greenCircleList.add(new GreenCircle());
-        stackPane.getChildren().add(greenCircleList.get(i));
+        pane.getChildren().add(greenCircleList.get(i));
       }
     });
+
+    // Resets the pane.
     resetBtn.setOnAction(e -> {
-      walk.paint();
+      rootWalk.paint(false);
+      pane.getChildren().remove(1, pane.getChildren().size()); // removes everything on pane
+      walkList.clear();
+      greenCircleList.clear();
     });
 
-    Scene scene = new Scene(pane, PANESIZE, PANESIZE);
+    // Event handler to pause and play all animations.
+    pauseBtn.setOnAction(e -> RandomWalk.pauseAndPlay(RandomWalk.getTransList())
+    );
+
+    Scene scene = new Scene(rootPane, SCENE_SIZE, SCENE_SIZE);
     stage.setTitle("Random Walk");
     stage.setScene(scene);
     stage.show();
     stage.setResizable(false);
   }
 
-  private void checkCollision(Shape car) {
+  private static void checkCollision(Shape car) {
     for (GreenCircle green : greenCircleList) {
       Shape intersect = Shape.intersect(car, green);
       if (intersect.getBoundsInLocal().getWidth() != -1) {
         if (!green.getTouched()) {
           green.setFill(Color.RED);
           green.setTouched(true);
-          System.out.println("Green Circle Collided");
-          stackPane
-            .getChildren()
-            .add(new RandomWalk(green.getLayoutX(), green.getLayoutY()));
+          System.out.printf(
+            "Green Circle Collided @ %.2f, %.2f\n",
+            green.getLayoutX(),
+            green.getLayoutY()
+          );
+          walkList.add(new RandomWalk(green.getLayoutX(), green.getLayoutY()));
+          pane.getChildren().add(walkList.get(walkList.size() - 1));
         }
-      }
-    }
-  }
-
-  public class RandomWalk extends Pane {
-
-    private final int STEP_COUNT = 2000;
-
-    private double startX;
-    private double startY;
-
-    public RandomWalk(double startX, double startY) {
-      this.startX = startX;
-      this.startY = startY;
-      paint();
-    }
-
-    public RandomWalk() {
-      startX = PANESIZE / 2;
-      startY = PANESIZE / 2;
-    }
-
-    private void paint() {
-      // Clear children
-      getChildren().clear();
-      // Create the 'car' that walks the path
-      Circle car = new Circle(8);
-      car.setFill(new Color(1, 0, 0, .4)); // opaque red
-      car.setTranslateX(startX); // starting point
-      car.setTranslateY(startY);
-
-      // Create Polyline and get a new random path
-      Polyline path = setWalkPath(startX, startY);
-      // Create Polyline which will be the line being drawn
-      Polyline drawLine = new Polyline();
-      drawLine.setStroke(new Color(0, 0, 1, 0.4));
-
-      // add car and drawLine to pane
-      getChildren().addAll(car, drawLine);
-
-      // Create PathTransition
-      PathTransition pathTrans = getWalkTransition(path, car);
-      pathTrans.play(); // play transition animation
-
-      drawLine.setSmooth(true);
-
-      // Listener on the car to draw the path
-      car
-        .boundsInParentProperty()
-        .addListener((observable, oldValue, newValue) -> {
-          // adds one point each time listener gets called
-          drawLine.getPoints().add(car.translateXProperty().doubleValue());
-          drawLine.getPoints().add(car.translateYProperty().doubleValue());
-        });
-
-      // Listens for collision on a green circle
-      car
-        .boundsInParentProperty()
-        .addListener((c, n, o) -> checkCollision(car));
-
-      Button pause = new Button("Pause");
-      getChildren().add(pause);
-
-      pause.setOnAction(e -> {
-        pauseAndPlay(pathTrans);
-        if (pathTrans.getStatus() == Animation.Status.PAUSED) {
-          pause.setText("Play");
-        } else pause.setText("Pause");
-      });
-    }
-
-    private void pauseAndPlay(PathTransition trans) {
-      if (trans.getStatus() == Animation.Status.PAUSED) {
-        trans.play();
-      } else {
-        trans.pause();
-      }
-    }
-
-    private PathTransition getWalkTransition(Shape path, Node node) {
-      PathTransition pathTrans = new PathTransition();
-      pathTrans.setPath(path);
-      pathTrans.setNode(node);
-      pathTrans.setDuration(Duration.seconds(210));
-      pathTrans.setCycleCount(1);
-      pathTrans.setInterpolator(Interpolator.LINEAR);
-
-      return pathTrans;
-    }
-
-    private Polyline setWalkPath(double startX, double startY) {
-      Polyline path = new Polyline();
-      double coordinates[] = { startX, startY };
-      for (int i = 0; i < STEP_COUNT; i++) {
-        // Add a point to the polyLine
-        // X coord
-        path.getPoints().add(coordinates[0]);
-        // Y coord
-        path.getPoints().add(coordinates[1]);
-        // Generates random endX endY coordinates
-        getEndCoordinates(coordinates);
-      }
-      return path;
-    }
-
-    private double randDistance() {
-      int num = 9 + (int) (Math.random() * ((18 - 9) + 1));
-      return (double) num;
-    }
-
-    private void getEndCoordinates(double[] coords) {
-      double newX, newY;
-      do {
-        double changeInDistance = randDistance();
-        double direction = randDirection();
-        newX = changeInDistance * Math.cos(direction) + coords[0];
-        newY = changeInDistance * Math.sin(direction) + coords[1];
-      } while (newX < 0 || newY < 0 || newX > 800 || newY > 800);
-
-      coords[0] = newX;
-      coords[1] = newY;
-    }
-
-    /**
-     * returns a random double between 1-8 to represent the 8 standard cardinal directions
-     * @return double between 1-8
-     */
-    private double randDirection() {
-      int direction = 1 + (int) (Math.random() * ((8 - 1) + 1));
-      return getDirection(direction);
-    }
-
-    /**
-     * translates a number 1-8 into a radian value to represent the 8 cardinal directions
-     * @param num the number that gets translated
-     * @return a radian value for direction
-     */
-    private double getDirection(int num) {
-      final double PI = Math.PI;
-      switch (num) {
-        case 1: // East
-          return (double) (0);
-        case 2: // North East
-          return (double) (PI / 4);
-        case 3: // North
-          return (double) (PI / 2);
-        case 4: // North West
-          return (double) ((3 * PI) / 4);
-        case 5: // West
-          return (double) (PI);
-        case 6: // South West
-          return (double) ((5 * PI) / 4);
-        case 7: // South
-          return (double) ((3 * PI) / 2);
-        default: // Default South East, just to please
-          return (double) ((7 * PI) / 4);
       }
     }
   }
