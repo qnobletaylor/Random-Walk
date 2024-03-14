@@ -12,7 +12,7 @@ import javafx.util.Duration;
 
 /**
  * Description : RandomWalk is a class for creating RandomWalk panes and paints a line of 2000
- * segments long within the pane.
+ * segments long within the pane.  By default each animation lasts 180 seconds.
  *
  * @author Quinlin Taylor
  * @since Thu Mar 7 2024
@@ -37,25 +37,26 @@ public class RandomWalk extends Pane {
    * @param startX x pixel coordinate
    * @param startY y pixel coordinate
    */
-  public RandomWalk(double startX, double startY, boolean start) {
+  public RandomWalk(double startX, double startY, boolean start, Color color) {
     this.startX = startX;
     this.startY = startY;
-    paint(start);
+    paint(start, color);
   }
 
   // Default Constructor
   public RandomWalk() {}
 
   /**
-   *
-   * @param autoPlay
+   * This function handles the entire randomWalk, creating the line and animating it.
+   * @param autoPlay determines if line starts playing immediately
+   * @param color the color of line and car
    */
-  public void paint(boolean autoPlay) {
+  public void paint(boolean autoPlay, Color color) {
     // Clear children
     getChildren().clear();
     // Create the 'car' that walks the path
     car = new Circle(8);
-    car.setFill(new Color(1, 0, 0, .4)); // opaque red
+    car.setFill(color);
     car.setTranslateX(startX); // starting point of circle
     car.setTranslateY(startY);
 
@@ -64,7 +65,7 @@ public class RandomWalk extends Pane {
 
     // Create Polyline which will be the line being drawn
     drawLine = new Polyline();
-    drawLine.setStroke(new Color(0, 0, 1, 0.4));
+    drawLine.setStroke(color);
 
     // add car and drawLine to pane
     getChildren().addAll(car, drawLine);
