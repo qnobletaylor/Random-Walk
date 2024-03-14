@@ -35,6 +35,8 @@ public class Topic5Project extends Application {
   private static RandomWalk rootWalk = new RandomWalk();
   private static ArrayList<GreenCircle> greenCircleList;
   private static ArrayList<RandomWalk> walkList;
+  private static Color opaqueRed = new Color(1, 0, 0, .4);
+  private static Color opaqueBlue = new Color(0, 0, 1, 0.4);
 
   // Create the collision listener
   private static ChangeListener<Bounds> collisionListener = new ChangeListener<>() {
@@ -61,7 +63,7 @@ public class Topic5Project extends Application {
     // Set the main RandomWalk start coordinates
     rootWalk.setStartX(SCENE_SIZE / 2);
     rootWalk.setStartY(SCENE_SIZE / 2);
-    rootWalk.paint(false);
+    rootWalk.paint(false, opaqueBlue);
     pane.getChildren().add(rootWalk);
 
     hBox.setSpacing(20); // 20 pixels between each node in Hbox
@@ -89,6 +91,9 @@ public class Topic5Project extends Application {
 
     // Event handler to pause and play all animations.
     pauseBtn.setOnAction(e -> {
+      if (pauseBtn.getText() == "Pause") pauseBtn.setText(
+        "Play"
+      ); else pauseBtn.setText("Pause");
       RandomWalk.pauseAndPlay();
     });
 
@@ -110,7 +115,7 @@ public class Topic5Project extends Application {
     greenCircleList.clear();
     RandomWalk.getTransList().clear();
     walkList.add(rootWalk);
-    rootWalk.paint(false);
+    rootWalk.paint(false, opaqueBlue);
   }
 
   /**
@@ -158,7 +163,12 @@ public class Topic5Project extends Application {
             );
             // Create a new random walk and add it to the list
             walkList.add(
-              new RandomWalk(green.getLayoutX(), green.getLayoutY(), true)
+              new RandomWalk(
+                green.getLayoutX(),
+                green.getLayoutY(),
+                true,
+                opaqueRed
+              )
             );
             // add it to the pane
             pane.getChildren().add(walkList.get(walkList.size() - 1));
