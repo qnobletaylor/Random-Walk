@@ -1,1 +1,1 @@
-java random walk project
+Program modeling a random walk using javafx
